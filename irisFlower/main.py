@@ -2,7 +2,6 @@
 import pandas as pd
 import numpy as np
 import Classifier
-
 # Cargar datos y dividirlos
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -19,7 +18,7 @@ iris_dataset = load_iris()
 
 
 def main():
-    knn_classifier = Classifier.Classifier(iris_dataset)
+    knn_classifier = Classifier.Classifier(iris_dataset, 5)
     while (True):
         printMenu()
         x = int(input("Select an option ->"))
@@ -49,13 +48,23 @@ def printMenu():
 
 def showPredictionScore(knn_classifier: Classifier):
     print(f"Prediction score: {knn_classifier.prediction_score() * 100:.2f}%")
+    print(
+        f"Scaled prediction score: {knn_classifier.prediction_score_scaled() * 100:.2f}%")
+    print(
+        f"PIPE+GRID prediction score: {knn_classifier.prediction_score_grid() * 100:.2f}%")
 
 
 def predictDataSet(knn_classifier: Classifier):
-    prediction = knn_classifier.predictData()
-    target = knn_classifier.dataset.target
+    prediction, test_data = knn_classifier.predictData()
+    predictionScaled, test_data = knn_classifier.predictScaledData()
+    predictionGrid, test_data = knn_classifier.predictGridData()
+
     print(
-        f"Dataset Prediction:\n{showPredictionData(prediction, target)}")
+        f"Dataset Prediction:\n{showPredictionData(prediction, test_data)}")
+    print(
+        f"Dataset Prediction SCALED:\n{showPredictionData(predictionScaled, test_data)}")
+    print(
+        f"Dataset Prediction GRID+PIPE:\n{showPredictionData(predictionGrid, test_data)}")
 
 
 def predictNewFlower(knn_classifier: Classifier):
@@ -65,9 +74,13 @@ def predictNewFlower(knn_classifier: Classifier):
     pWidth = mustBeFloat("set petal width(cm):")
     new_flower = [[sLength, sWidth, pLength, pWidth]]
 
-    prediction = knn_classifier.predictData(new_flower)
+    prediction, test_data = knn_classifier.predictData(new_flower)
+    predictionScaled, test_data = knn_classifier.predictScaledData(new_flower)
+    predictionGrid, test_data = knn_classifier.predictGridData(new_flower)
     classes = ["setosa", "versicolor", "virginica"]
-    print(f"Your flower it's a {classes[prediction[0]]}")
+    print(f"BASE-NEIGHBORS: Your flower it's a {classes[prediction[0]]}")
+    print(f"SCALED: Your flower it's a {classes[predictionScaled[0]]}")
+    print(f"PIPELINE+GRID: Your flower it's a {classes[predictionGrid[0]]}")
 
 
 def mustBeFloat(prompt: str) -> float:
@@ -75,7 +88,7 @@ def mustBeFloat(prompt: str) -> float:
         try:
             return float(input(prompt))
         except ValueError:
-            print("SET ONLY NUMBERS!!!!")
+            print("SET ONLY FLOAT VALUES!!!!")
 
 
 # Usamos pandas para mostrar visualmente los datos en forma de tabla
@@ -100,6 +113,7 @@ def showDataFrames():
 
 
 def showPredictionData(prediccion: np.ndarray, target: np.ndarray):
+    print(target)
     data = "Predictions\tTargets\n"
     clases = ["setosa", "versicolor", "virginica"]
     for i in range(len(prediccion)):
